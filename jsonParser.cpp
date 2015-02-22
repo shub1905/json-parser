@@ -103,9 +103,16 @@ private:
          output = vector<string> (A, B , C..) */
         
         stack<char> bracketMatcher;
-        int start=1, end = -1;
-        for (int i=1; i<stream.size(); i++)
+        int start=0, end = -1;
+        char tempChar;
+        for (int i=start; i<stream.size() && stream[i] == ' ';i++)
         {
+            start++;
+        }
+        start++;
+        for (int i=start; i<stream.size(); i++)
+        {
+            tempChar = stream[i];
             if (stream[i] == '[' || stream[i] == '{')
             {
                 bracketMatcher.push(stream[i]);
@@ -234,7 +241,15 @@ private:
 int main()
 {
     jsonTree a;
-    a.loads("{\"type\":1, \"source\":\"shubham\",\"arr\":[{\"hi\":45,\"bye\":[2,3,4]},2,3]}");
+    a.loads("{\"type\":1, \
+            \"source\":\"shubham\", \
+            \"arr\": \
+                [{\"hi\":45,\"bye\":[2,3,4]},2,3], \
+            \"arrofarr\":\
+                [\
+                    [11,12],\
+                    [13,14] \
+                ]}");
     cout<<"Hello Json Parser"<<endl;
     cout<<a.hashMap["type"].intVal<<endl;
     cout<<a.hashMap["source"].stringVal<<endl;
@@ -249,5 +264,10 @@ int main()
         cout<<b.hashMap["bye"].vectorList[i].intVal<<endl;
     }
     
+    cout<<a.hashMap["arrofarr"].vectorList[0].vectorList[0].intVal<<endl;
+    cout<<a.hashMap["arrofarr"].vectorList[0].vectorList[1].intVal<<endl;
+    cout<<a.hashMap["arrofarr"].vectorList[1].vectorList[0].intVal<<endl;
+    cout<<a.hashMap["arrofarr"].vectorList[1].vectorList[1].intVal<<endl;
+
     return 0;
 }
