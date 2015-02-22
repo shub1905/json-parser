@@ -114,7 +114,6 @@ class jsonTree
             if (stream[i] == '[' || stream[i] == '{')
             {
                 bracketMatcher.push(stream[i]);
-                start = i;
             }
             else if( (stream[i] == ',' || stream[i] == ']') && bracketMatcher.size() == 0)
             {
@@ -165,6 +164,45 @@ class jsonTree
         }
     }
 
+    bool getToken(string &stream, string &key, string &value)
+    {
+        stack<char> bracketMatcher;
+        
+        size_t posBegin = stream.find('"');
+        size_t posEnd = stream.find('"', posBegin+1);
+        size_t posColon = stream.find(':');
+        
+        key = stream.substr(posBegin+1,posEnd);
+        stream = stream.substr(posColon+1);
+        
+        size_t start=0,end=-1;
+        for (int i=0;i<stream.size();i++)
+        {
+            if (stream[i] == '[' || stream[i] == '{')
+            {
+                bracketMatcher.push(stream[i]);
+            }
+            else if( (stream[i] == ',' || stream[i] == '}') && bracketMatcher.size() == 0)
+            {
+                end = i;
+                value = stream.substr(start,end);
+                return true;
+            }
+            else if (stream[i] == ']' || stream[i] == '}')
+            {
+                if (bracketMatcher.top() != stream[i])
+                {
+                    return false;
+                    //write error code; unmatching brackets
+                }
+                bracketMatcher.pop();
+            }
+
+        }
+        return true;
+    }
+    
+    
     void parseJsonObject(string stream)
     {
         string key;
@@ -232,28 +270,6 @@ class jsonTree
         return true;
     }
 
-    bool getToken(string &stream, string &key, string &type)
-    {
-        getType(stream, type);
-
-        if (type == "object")
-        {
-            int position = stream.find("\"");
-            int count = 0;
-            for (int i=0; i<stream.length(); ++i)
-            {
-                if (stream[i] == '\"')
-                {
-                    break;
-                }
-                count++;
-            }
-            key = stream.substr(position, count);
-            stream = stream.substr(position+count);
-            return true;
-        }
-        return false;
-    }
 };
 
 
