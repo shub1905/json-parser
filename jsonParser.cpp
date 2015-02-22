@@ -1,4 +1,4 @@
-#include <iostream>
+    #include <iostream>
 #include <vector>
 #include <map>
 #include <string>
@@ -6,6 +6,8 @@
 #include <sstream>
 using namespace std;
 
+/* add null type in Json
+ */
 class jsonTree
 {
 	public:
@@ -19,6 +21,8 @@ class jsonTree
     {
         string type;
         getType(stream, type);
+        string tempStr = stream;
+
         if (type == "array")
         {
             parseArray(stream, vectorList);
@@ -33,11 +37,12 @@ class jsonTree
         }
         else if (type == "string")
         {
-            stringVal = stream;
+            stringVal = stringToString(stream);
         }
         else // if (type == "object")
         {
             parseJsonObject(stream);
+            tempStr = stream;
         }
 
     }
@@ -74,6 +79,13 @@ class jsonTree
             listObjects.push_back(*temp);
         }
 
+    }
+    
+    string stringToString(string value)
+    {
+        size_t posBegin = value.find('"');
+        size_t posEnd = value.find('"',posBegin+1);
+        return value.substr(posBegin+1, posEnd-posBegin-1);
     }
     
     bool stringToBool(string value)
@@ -118,21 +130,25 @@ class jsonTree
             else if( (stream[i] == ',' || stream[i] == ']') && bracketMatcher.size() == 0)
             {
                 end = i;
-                objectsArray.push_back(stream.substr(start,end));
+                objectsArray.push_back(stream.substr(start,end-start));
+                start = end+1;
             }
             else if (stream[i] == ']' || stream[i] == '}')
             {
-                if (bracketMatcher.top() != stream[i])
+                if ( (bracketMatcher.top() == '[' && ']' != stream[i]) || (bracketMatcher.top() == '{' && '}' != stream[i]) )
                 {
                     cout<<"Error"<<endl;
                     return;
                     //add more error handling code here
                 }
+                bracketMatcher.pop();
             }
         }
+        
+        stream = stream.substr(start);
     }
     
-    void getType(string &stream, string &type)
+    void getType(string stream, string &type)
     {
         for (int i=0; i<stream.size(); i++)
         {
@@ -146,7 +162,7 @@ class jsonTree
                 type = "array";
                 break;
             }
-            else if (stream[i] == ',' || stream[i] == '}')
+            else if (stream[i] == ',' || stream[i] == '}' || i == stream.size()-1)
             {
                 type = "int";
                 break;
@@ -172,7 +188,11 @@ class jsonTree
         size_t posEnd = stream.find('"', posBegin+1);
         size_t posColon = stream.find(':');
         
-        key = stream.substr(posBegin+1,posEnd);
+        if (posBegin == string::npos || posEnd == string::npos || posColon == string::npos)
+            return false;
+        
+        bool init = true;
+        key = stream.substr(posBegin+1, posEnd-posBegin-1);
         stream = stream.substr(posColon+1);
         
         size_t start=0,end=-1;
@@ -181,16 +201,22 @@ class jsonTree
             if (stream[i] == '[' || stream[i] == '{')
             {
                 bracketMatcher.push(stream[i]);
+                if (init)
+                {
+                    start = i; //presence of bracket implies
+                    init = false;
+                }
             }
             else if( (stream[i] == ',' || stream[i] == '}') && bracketMatcher.size() == 0)
             {
                 end = i;
-                value = stream.substr(start,end);
+                value = stream.substr(start,end-start);
+                stream = stream.substr(end+1);
                 return true;
             }
             else if (stream[i] == ']' || stream[i] == '}')
             {
-                if (bracketMatcher.top() != stream[i])
+                if ( (bracketMatcher.top() == '[' && ']' != stream[i]) || (bracketMatcher.top() == '{' && '}' != stream[i]) )
                 {
                     return false;
                     //write error code; unmatching brackets
@@ -203,80 +229,42 @@ class jsonTree
     }
     
     
-    void parseJsonObject(string stream)
+    void parseJsonObject(string &stream)
     {
         string key;
         string type;
+        string value;
         while(true)
         {
-            if(!getToken(stream, key, type))
+            if(!getToken(stream, key, value))
             {
                 break;
             }
-            string valueString;
-            getValueString(stream, valueString);
-            jsonTree * second = new jsonTree();
-            
-            second->parseJson(valueString);
-            hashMap[key] = *second;
+            jsonTree *temp = new jsonTree();
+            temp -> loads(value);
+            hashMap[key] = *temp;
         }
     }
-
-    bool getValueString(string &stream, string &valueString)
-    {
-        bool colon = false;
-        bool init = false;
-        int start=0, end=0;
-        stack<char> bracketMatcher;
-
-        for (int i=0; i<stream.size(); i++)
-        {
-            if (stream[i] == ':')
-            {
-                colon = true;
-                start = i+1;
-            }
-            if (stream[i] == '[' || stream[i] == '{')
-            {
-                if (!init)
-                {
-                    start = i;
-                    init = true;
-                }
-                bracketMatcher.push(stream[i]);
-            }
-            if (stream[i] == ']' || stream[i] == '}')
-            {
-                if (stream[i] != bracketMatcher.top())
-                {
-                    return false;
-                }
-                bracketMatcher.pop();
-                if (bracketMatcher.size() == 0)
-                {
-                    end = i;
-                    break;
-                }
-            }
-            if (!init && stream[i] == ',')
-            {
-                end = i-1;
-                break;
-            }
-        }
-
-        valueString = stream.substr(start,end+1);
-        stream = stream.substr(end);
-        return true;
-    }
-
 };
 
 
 int main()
 {
 	jsonTree a;
-	a.parseJson("{\"type\":1}");
+	a.loads("{\"type\":1, \"source\":\"shubham\",\"arr\":[{\"hi\":45,\"bye\":[2,3,4]},2,3]}");
 	cout<<"Hello Json Parser"<<endl;
+    cout<<a.hashMap["type"].intVal<<endl;
+    cout<<a.hashMap["source"].stringVal<<endl;
+    for (int i=1;i<a.hashMap["arr"].vectorList.size();i++)
+    {
+        cout<<a.hashMap["arr"].vectorList[i].intVal<<endl;
+    }
+    jsonTree b = a.hashMap["arr"].vectorList[0];
+    cout<<b.hashMap["hi"].intVal<<endl;
+    for (int i=1;i<b.hashMap["bye"].vectorList.size();i++)
+    {
+        cout<<b.hashMap["bye"].vectorList[i].intVal<<endl;
+    }
+
 	return 0;
 }
