@@ -1,4 +1,4 @@
-    #include <iostream>
+#include <iostream>
 #include <vector>
 #include <map>
 #include <string>
@@ -10,19 +10,19 @@ using namespace std;
  */
 class jsonTree
 {
-	public:
+public:
     int intVal;
     string stringVal;
     bool boolVal;
     map<string, jsonTree> hashMap;
     vector<jsonTree> vectorList;
-
+    
     void loads(string stream)
     {
         string type;
         getType(stream, type);
         string tempStr = stream;
-
+        
         if (type == "array")
         {
             parseArray(stream, vectorList);
@@ -44,9 +44,9 @@ class jsonTree
             parseJsonObject(stream);
             tempStr = stream;
         }
-
+        
     }
-	private:
+private:
     void parseArray(string &stream, vector<jsonTree> & listObjects)
     {
         vector<string> objectsArray;
@@ -59,26 +59,9 @@ class jsonTree
             
             jsonTree * temp = new jsonTree();
             temp -> loads(objectsArray[i]);
-            /*
-            if (typeChild == "int")
-            {
-                temp -> intVal = stringToInt(objectsArray[i]);
-            }
-            else if (typeChild == "bool")
-            {
-                temp -> boolVal = stringToBool(objectsArray[i]);
-            }
-            else if (typeChild == "string")
-            {
-                temp -> stringVal = objectsArray[i];
-            }
-            else // if(typeChild == "object" || typeChild == "array")
-            {
-
-            }*/
             listObjects.push_back(*temp);
         }
-
+        
     }
     
     string stringToString(string value)
@@ -113,7 +96,7 @@ class jsonTree
         ss>>val;
         return val;
     }
-
+    
     void getTokensArray(string &stream, vector<string> &objectsArray)
     {
         /* input = [A,B,C....]
@@ -179,7 +162,7 @@ class jsonTree
             }
         }
     }
-
+    
     bool getToken(string &stream, string &key, string &value)
     {
         stack<char> bracketMatcher;
@@ -223,7 +206,7 @@ class jsonTree
                 }
                 bracketMatcher.pop();
             }
-
+            
         }
         return true;
     }
@@ -250,9 +233,9 @@ class jsonTree
 
 int main()
 {
-	jsonTree a;
-	a.loads("{\"type\":1, \"source\":\"shubham\",\"arr\":[{\"hi\":45,\"bye\":[2,3,4]},2,3]}");
-	cout<<"Hello Json Parser"<<endl;
+    jsonTree a;
+    a.loads("{\"type\":1, \"source\":\"shubham\",\"arr\":[{\"hi\":45,\"bye\":[2,3,4]},2,3]}");
+    cout<<"Hello Json Parser"<<endl;
     cout<<a.hashMap["type"].intVal<<endl;
     cout<<a.hashMap["source"].stringVal<<endl;
     for (int i=1;i<a.hashMap["arr"].vectorList.size();i++)
@@ -265,6 +248,6 @@ int main()
     {
         cout<<b.hashMap["bye"].vectorList[i].intVal<<endl;
     }
-
-	return 0;
+    
+    return 0;
 }
